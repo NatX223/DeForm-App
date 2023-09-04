@@ -15,6 +15,9 @@ contract userTables is ERC721Holder {
     // string private constant _TABLE_PREFIX = "first_table";
     address public owner;
 
+    // the chain it will be deployed to
+    uint256 public chainId;
+
     // table struct
     struct Table {
         uint256 tableId;
@@ -26,8 +29,9 @@ contract userTables is ERC721Holder {
     // mapping table counters to tables
     mapping (uint256 => Table) Tables;
 
-    constructor() {
+    constructor(uint256 _chainId) {
         owner = msg.sender;
+        chainId = _chainId;
     }
 
     // function to create a table
@@ -43,15 +47,17 @@ contract userTables is ERC721Holder {
             // fieldName[5], " ", fieldType[5],
             // fieldName[6], " ", fieldType[6]
         );
-        Tables[_tableCount.current()].tablePrefix = tablePrefix;
-        Tables[_tableCount.current()].tableId = TablelandDeployments.get().create( // creating a table ID
+        uint256 id = TablelandDeployments.get().create( // creating a table ID
             address(this), // setting it's owner to the address for easy write access
             SQLHelpers.toCreateFromSchema(
                 createQuery,
                 tablePrefix // the needed prefix for table
             )
         );
-        // find a way to handle tableName (important)
+        Tables[_tableCount.current()].tableId = id;
+        Tables[_tableCount.current()].tableName = string.concat(
+            tablePrefix, "_", Strings.toString(chainId), "_", Strings.toString(id)
+        );
     }
 
     // function to return tableId
