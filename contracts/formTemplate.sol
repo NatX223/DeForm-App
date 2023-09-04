@@ -35,7 +35,7 @@ contract userTables is ERC721Holder {
     }
 
     // function to create a table
-    function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType) public {
+    function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType, string memory description) public {
         require(fieldName.length == fieldType.length && fieldName.length == 5);
 
         string memory createQuery = string.concat( // concating strings to form a create table query
@@ -54,6 +54,8 @@ contract userTables is ERC721Holder {
                 tablePrefix // the needed prefix for table
             )
         );
+        Tables[_tableCount.current()].description = description;
+        Tables[_tableCount.current()].tablePrefix = tablePrefix;
         Tables[_tableCount.current()].tableId = id;
         Tables[_tableCount.current()].tableName = string.concat(
             tablePrefix, "_", Strings.toString(chainId), "_", Strings.toString(id)
@@ -61,9 +63,9 @@ contract userTables is ERC721Holder {
     }
 
     // function to return tableId
-    function tableId(uint256 id) public view returns(uint256) {
-        return Tables[id].tableId;
-    }
+    // function getTable(uint256 id) public view returns(uint256) {
+    //     return Tables[id].tableId;
+    // }
 
     // // function to write to a table
     // function writeTable() public payable {
