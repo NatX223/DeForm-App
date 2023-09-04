@@ -32,37 +32,50 @@ contract userTables is ERC721Holder {
 
     // function to create a table
     function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType) public {
-        require(fieldName.length == fieldType.length && fieldName.length == 7);
+        require(fieldName.length == fieldType.length && fieldName.length == 5);
+
+        string memory createQuery = string.concat( // concating strings to form a create table query
+            fieldName[0], " ", fieldType[0], " ", "primary key",
+            fieldName[1], " ", fieldType[1],
+            fieldName[2], " ", fieldType[2],
+            fieldName[3], " ", fieldType[3],
+            fieldName[4], " ", fieldType[4]
+            // fieldName[5], " ", fieldType[5],
+            // fieldName[6], " ", fieldType[6]
+        );
         Tables[_tableCount.current()].tablePrefix = tablePrefix;
         Tables[_tableCount.current()].tableId = TablelandDeployments.get().create( // creating a table ID
             address(this), // setting it's owner to the address for easy write access
             SQLHelpers.toCreateFromSchema(
-                // concating strings to form 
-                "id integer primary key," // Notice the trailing comma // the primary key of the table
-                "val text", // Separate lines for readability—but it's a single string // value to be added
-                tablePrefix // the needed prefix for table (I guess a ttable name)
+                createQuery,
+                tablePrefix // the needed prefix for table
             )
         );
-        // find a way to handle tableName
+        // find a way to handle tableName (important)
     }
 
-    // function to write to a table
-    function writeTable() public payable {
-          TablelandDeployments.get().mutate(
-            address(this),
-            _tableId,
-            SQLHelpers.toInsert(
-            _TABLE_PREFIX,
-            _tableId,
-            "id,val",
-            string.concat(
-                Strings.toString(uint256(1)), // Convert to a string
-                ",",
-                SQLHelpers.quote(Strings.toHexString(msg.sender)) // Wrap strings in single quotes
-            )
-            )
-        );
+    // function to return tableId
+    function tableId(uint256 id) public view returns(uint256) {
+        return Tables[id].tableId;
     }
+
+    // // function to write to a table
+    // function writeTable() public payable {
+    //       TablelandDeployments.get().mutate(
+    //         address(this),
+    //         _tableId,
+    //         SQLHelpers.toInsert(
+    //         _TABLE_PREFIX,
+    //         _tableId,
+    //         "id,val",
+    //         string.concat(
+    //             Strings.toString(uint256(1)), // Convert to a string
+    //             ",",
+    //             SQLHelpers.quote(Strings.toHexString(msg.sender)) // Wrap strings in single quotes
+    //         )
+    //         )
+    //     );
+    // }
 
     // creating a table factory
     // mapping tableIDs and tableNames to uints probably counters

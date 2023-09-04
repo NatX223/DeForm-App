@@ -8,6 +8,5 @@ typechain-types
 # Hardhat files
 cache
 artifacts
-
-credentials.mjs
 hardhat.config.js
+credentials.mjs
