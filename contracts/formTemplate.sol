@@ -66,13 +66,14 @@ contract userTables is ERC721Holder {
 
     // function to write to a table
     function writeTable(uint256 id) public payable {
+          string memory writeQuery = concatWriteArray(fieldNames[id]);
           TablelandDeployments.get().mutate(
             address(this),
             Tables[id].tableId,
             SQLHelpers.toInsert(
             Tables[id].tablePrefix,
             Tables[id].tableId,
-            "id,val",
+            writeQuery,
             string.concat(
                 Strings.toString(uint256(1)), // Convert to a string
                 ",",
@@ -106,8 +107,7 @@ contract userTables is ERC721Holder {
         return queryString;
     }
 
-    function concatWriteArray(string[] memory fields, string[] memory types) public pure returns (string memory) {
-        require(fields.length == types.length);
+    function concatWriteArray(string[] memory fields) public pure returns (string memory) {
         string memory queryString;
         for (uint i = 0; i < fields.length; i++) {
             if(i == (fields.length - 1)) {
@@ -119,7 +119,7 @@ contract userTables is ERC721Holder {
             else {
             queryString = string.concat(
                 queryString,
-                fields[i], " ", ","
+                fields[i], ","
             );
             }
         }
