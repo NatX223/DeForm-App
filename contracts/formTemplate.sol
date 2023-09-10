@@ -6,13 +6,12 @@ import "@tableland/evm/contracts/utils/SQLHelpers.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract userTables is ERC721Holder {
     using Counters for Counters.Counter; // OpenZepplin Counter
     Counters.Counter private _tableCount; // Counter For Proposals
 
-    // uint256 public _tableId;
-    // string private constant _TABLE_PREFIX = "first_table";
     address public owner;
 
     // the chain it will be deployed to
@@ -26,11 +25,21 @@ contract userTables is ERC721Holder {
         string description;
     }
 
+    // struct of reward
+    struct Reward {
+        uint256 totalAmount;
+        uint256 singleAmount;
+        address tokenAddress;
+    }
+
     // mapping table counters to tables
     mapping (uint256 => Table) Tables;
 
     // mapping tableIds to field names
     mapping (uint256 => string[]) fieldNames;
+
+    // mapping of a table id to the reward for the table
+    mapping (uint256 => Reward) tableReward;
 
     constructor(uint256 _chainId) {
         owner = msg.sender;
@@ -38,7 +47,7 @@ contract userTables is ERC721Holder {
     }
 
     // function to create a table
-    function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType, string memory description) public {
+    function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType, string memory description) public onlyOwner {
         require(fieldName.length == fieldType.length && fieldName.length == 5);
 
         string memory createQuery = concatCreationArray(fieldName, fieldType);
@@ -65,6 +74,7 @@ contract userTables is ERC721Holder {
     }
 
     // function to write to a table
+    // implement function to check if an answer is correct
     function writeTable(uint256 id) public payable {
           string memory writeQuery = concatWriteArray(fieldNames[id]);
           TablelandDeployments.get().mutate(
@@ -81,9 +91,18 @@ contract userTables is ERC721Holder {
             )
             )
         );
+
+        if (address(this).balance >= tableReward[id].singleAmount && tableReward[id].totalAmount >= tableReward[id].singleAmount) {
+            (bool sent, bytes memory data) = payable(msg.sender).call{value: tableReward[id].singleAmount}("");
+            require(sent, "failed to send ether");
+        }
+
+        if (IERC20(tableReward[id].tokenAddress).balanceOf(address(this)) >= tableReward[id].singleAmount && tableReward[id].totalAmount >= tableReward[id].singleAmount) {
+            IERC20(tableReward[id].tokenAddress).transfer(msg.sender, tableReward[id].singleAmount);
+        }
     }
 
-    function concatCreationArray(string[] memory fields, string[] memory types) public pure returns (string memory) {
+    function concatCreationArray(string[] memory fields, string[] memory types) internal pure returns (string memory) {
         require(fields.length == types.length);
         string memory queryString;
         for (uint i = 0; i < fields.length; i++) {
@@ -107,7 +126,7 @@ contract userTables is ERC721Holder {
         return queryString;
     }
 
-    function concatWriteArray(string[] memory fields) public pure returns (string memory) {
+    function concatWriteArray(string[] memory fields) internal pure returns (string memory) {
         string memory queryString;
         for (uint i = 0; i < fields.length; i++) {
             if(i == (fields.length - 1)) {
@@ -124,6 +143,30 @@ contract userTables is ERC721Holder {
             }
         }
         return queryString;
-    }   
+    }
+
+    // function to add a reward for filling a form
+    function addRewardNative(uint256 id, uint256 singleAmount) public payable onlyOwner {
+        // map it to the tableId
+        tableReward[id].totalAmount = msg.value;
+        // define what each response should get
+        tableReward[id].singleAmount = singleAmount;
+    }
+
+    // function to add a reward for filling a form
+    function addRewardToken(uint256 id, uint256 totalAmount, uint256 singleAmount, address tokenAddress) public onlyOwner {
+        // put some tokens into the contract
+        IERC20(tokenAddress).transferFrom(msg.sender, address(this), totalAmount);
+        
+        tableReward[id].totalAmount = totalAmount;
+        // define what each response should get
+        tableReward[id].singleAmount = singleAmount;
+        tableReward[id].tokenAddress = tokenAddress;
+    }  
+
+    modifier onlyOwner {
+        require(msg.sender == owner);
+        _;
+    }
 }
 
