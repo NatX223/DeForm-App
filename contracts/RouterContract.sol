@@ -50,12 +50,11 @@ contract Router is ERC721Holder {
     }
 
     // function to return table
-    function getTable() public view returns(uint256, string memory, string memory) {
-        return (Tables[1].tableId, Tables[1].tablePrefix, Tables[1].tableName);
+    function getTable() public view returns(string memory) {
+        return (Tables[1].tableName);
     }
 
     // function to write to a table
-    // implement function to check if an answer is correct
     function addTable(string memory tableName, address tableContract, uint tableId) public {
           TablelandDeployments.get().mutate(
             address(this),
@@ -65,7 +64,7 @@ contract Router is ERC721Holder {
             Tables[1].tableId,
             "tableName,tableContract,tableId",
             string.concat(
-                Strings.toString(uint256(_RouterTableCountId.current())), // Convert to a string
+                Strings.toString(uint256(_RouterTableCountId.current())),
                 ",",
                 SQLHelpers.quote(tableName),
                 ",",

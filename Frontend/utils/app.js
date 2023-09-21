@@ -32,8 +32,9 @@ export const getUserAddress = async () => {
 
 function getInputs(questions, inputTypes) {
     const modifiedQuestions = questions.map((question, i) => {
-      const inputType = inputTypes[i];
-      return `${question}(${inputType})`;
+        const modifiedQuestion = question.replace(/\s/g, '_');
+        const inputType = inputTypes[i];
+        return `${modifiedQuestion}(${inputType})`;
     });
   
     const modifiedInputTypes = inputTypes.map((inputType) => {
@@ -76,13 +77,63 @@ export const createForm = async (_questions, _inputTypes, name, details) => {
     }
 }
 
+function findTable(array, targetTableName) {
+    for (let i = 0; i < array.length; i++) {
+      if (array[i].tableName === targetTableName) {
+        return array[i];
+      }
+    }
+    // If no matching object is found, return null or handle it as needed
+    return null;
+}
+
+function getObjectParameters(array) {
+if (array.length === 0) {
+    return []; // Return an empty array if the input array is empty.
+}
+
+// Get the keys (parameters) of the first object in the array.
+const keys = Object.keys(array[0]);
+
+// Assuming all objects in the array have the same parameters,
+// you can simply return the keys from the first object.
+return keys;
+}
+
+function splitElements(array) {
+    const firstArray = [];
+    const secondArray = [];
+  
+    array.forEach((element) => {
+      const matches = element.match(/^(.*?)\((.*?)\)$/);
+      if (matches && matches.length === 3) {
+        firstArray.push(matches[1]);
+        secondArray.push(matches[2]);
+      }
+    });
+  
+    return [firstArray, secondArray];
+  }
+
 // create function to get a form
 // get table contract and id using tableName(get TableName from search params)
-// const routerTableName = await routerContract.tableName();
+// construct contract
 // get questions and by types by separating the question from the '(inputType)' get them and concat to arrays then return them
+export const getForm = async (tableName) => {
+    const { results } = await db.prepare(`SELECT * FROM ${tableName} LIMIT 2;`).all();
+    const _form = getObjectParameters(results);
+    const form = splitElements(_form);
+    console.log(form);
+    return form;
+}
 
 // create function to get responses from users
 // prolly do the concatenation here
-
+const routerContract = new ethers.Contract(routerContractAddress, routerABI, signer);
+const routerName = routerContract.getTable();
+const { results } = await db.prepare(`SELECT * FROM ${routerName};`).all();
+const table = findTable(results, tableName);
+const formContract = new ethers.Contract(table.tableContract, formABI, signer);
 // create function to upload files and return their IPFS hash
 // then concat to response array
+
