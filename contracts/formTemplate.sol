@@ -14,15 +14,13 @@ contract userTables is ERC721Holder {
 
     address public owner;
 
-    // the chain it will be deployed to
-    uint256 public chainId;
-
     // table struct
-    struct Table {
+    struct Table { 
         uint256 tableId;
         string tablePrefix;
         string tableName;
         string description;
+        uint256 responseCount;
     }
 
     // struct of reward
@@ -41,9 +39,8 @@ contract userTables is ERC721Holder {
     // mapping of a table id to the reward for the table
     mapping (uint256 => Reward) tableReward;
 
-    constructor(uint256 _chainId) {
+    constructor() {
         owner = msg.sender;
-        chainId = _chainId;
     }
 
     // function to create a table
@@ -61,8 +58,9 @@ contract userTables is ERC721Holder {
         Tables[_tableCount.current()].description = description;
         Tables[_tableCount.current()].tablePrefix = tablePrefix;
         Tables[_tableCount.current()].tableId = id;
+        Tables[_tableCount.current()].responseCount = 0;
         Tables[_tableCount.current()].tableName = string.concat(
-            tablePrefix, "_", Strings.toString(chainId), "_", Strings.toString(id)
+            tablePrefix, "_", Strings.toString(block.chainid), "_", Strings.toString(id)
         );
         fieldNames[_tableCount.current()] = fieldName;
         _tableCount.increment();
@@ -75,8 +73,9 @@ contract userTables is ERC721Holder {
 
     // function to write to a table
     // implement function to check if an answer is correct
-    function writeTable(uint256 id) public payable {
+    function writeTable(uint256 id, string[] memory responses) public payable {
           string memory writeQuery = concatWriteArray(fieldNames[id]);
+          string memory inputString = concatWriteArray(responses);
           TablelandDeployments.get().mutate(
             address(this),
             Tables[id].tableId,
@@ -84,11 +83,7 @@ contract userTables is ERC721Holder {
             Tables[id].tablePrefix,
             Tables[id].tableId,
             writeQuery,
-            string.concat(
-                Strings.toString(uint256(1)), // Convert to a string
-                ",",
-                SQLHelpers.quote(Strings.toHexString(msg.sender)) // Wrap strings in single quotes
-            )
+            inputString
             )
         );
 
