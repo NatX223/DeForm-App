@@ -5,6 +5,8 @@ import { formABI } from "./formABI";
 
 require("dotenv").config();
 
+const bytecode = '333mm4m4m4m4m4'; // update bytecode
+
 // Connect to the database
 const db = new Database();
 
@@ -28,33 +30,51 @@ export const getUserAddress = async () => {
     return address;
 }
 
-const create = async (questions, inputTypes, name, details) => { // add the fee and reward feature
+function getInputs(questions, inputTypes) {
+    const modifiedQuestions = questions.map((question, i) => {
+      const inputType = inputTypes[i];
+      return `${question}(${inputType})`;
+    });
+  
+    const modifiedInputTypes = inputTypes.map((inputType) => {
+      // Change "file" to "text"
+      return inputType === "file" ? "text" : inputType;
+    });
+  
+    return [modifiedQuestions, modifiedInputTypes];
+}
+
+const create = async (_questions, _inputTypes, name, details, contractAddress) => { // add the fee and reward feature
     // getContract Address
-    const routerContract = new ethers.Contract(routerContractAddress, routerABI, signer);
-    const userAddress = getUserAddress();
-    const inputs = await getInputs(questions, inputTypes);
-    // const contractAddress = // run query to get contract address of signer(userAddress)
+    const [questions, inputTypes] = getInputs(_questions, _inputTypes);
     // construct contract
     const formContract = new ethers.Contract(contractAddress, formABI, signer);
     // call function to create table
-    const tx = await formContract.createTable(name, inputs.questions, inputs.inputTypes, details)
+    const tx = await formContract.createTable(name, questions, inputTypes, details)
     const receipt = await tx.wait();
-    console.log(receipt);
+    return(receipt);
 }
 
-//execte function to concat '(file)' to the question if inputType = file, then replace the file with text, do for all tables
-const getInputs = async (questions, inputTypes) => {
-    const _questions = "4";
-    const _inputTypes = "4";
-    return {questions: _questions, inputTypes: _inputTypes}
+const deploy = async () => {
+    const ContractInstance = new ethers.ContractFactory(formABI, bytecode, signer);
+    const contractInstance = await ContractInstance.deploy();
+    const contractReturnedString = await contractInstance.getName();
+    return contractReturnedString;
 }
 
-// create function to deploy contract and return the address
-// const deployContract()
-
-// create function to check if an address exists(check router contract if user has contract)
-// if it does not, deploy then call create function
-// const createForm() and export
+export const createForm = async (_questions, _inputTypes, name, details) => {
+    const routerContract = new ethers.Contract(routerContractAddress, routerABI, signer);
+    const userAddress = getUserAddress();
+    const contractAddress = await routerContract.getContract(userAddress); // update router contract with functions to set and get contractAddress for users update createTable function in formContract
+    if (contractAddress == '0x0000000000000000000000000000000000000000') {
+        const newContractAddress = await deploy();
+        const receipt = await create(_questions, _inputTypes, name, details, newContractAddress);
+        console.log(receipt);
+    } else {
+        const receipt = await create(_questions, _inputTypes, name, details, contractAddress);
+        console.log(receipt);
+    }
+}
 
 // create function to get a form
 // get table contract and id using tableName(get TableName from search params)
