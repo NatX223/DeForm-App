@@ -24,6 +24,9 @@ contract Router is ERC721Holder {
     // mapping table counters to tables
     mapping (uint256 => Table) public Tables;
 
+    // mapping of contract address to form creator
+    mapping (address => address) contractOwners;
+
     constructor() {
         owner = msg.sender;
         createRouterTable();
@@ -55,7 +58,8 @@ contract Router is ERC721Holder {
     }
 
     // function to write to a table
-    function addTable(string memory tableName, address tableContract, uint tableId) public {
+    function addTable(address formOwner, string memory tableName, address tableContract, uint tableId) public {
+          setContract(formOwner, tableContract);
           TablelandDeployments.get().mutate(
             address(this),
             Tables[1].tableId,
@@ -77,6 +81,14 @@ contract Router is ERC721Holder {
         _RouterTableCountId.increment();
     }
 
+    function setContract(address formOwner, address contractAddress) internal {
+        contractOwners[formOwner] = contractAddress;
+    }
+
+    function getContract(address formOwner) public view returns(address contractAddress) {
+        contractAddress = contractOwners[formOwner];
+    }
+    
     modifier onlyOwner {
         require(msg.sender == owner);
         _;

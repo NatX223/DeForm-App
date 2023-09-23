@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { submitForm } from '../utils/app';
 
 function ResponseField({ formQuestions }) {
 
@@ -12,10 +13,11 @@ const handleInputChange = (event) => {
     });
 };
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     const formDataArray = Object.entries(formData).map(([key, value]) => ({ question: key, answer: value }));
     console.log(formDataArray);
+    await submitForm();
   };
 
   return (

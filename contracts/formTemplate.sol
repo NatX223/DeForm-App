@@ -8,14 +8,19 @@ import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
+interface RouterContract {
+    function addTable(address formOwner, string memory tableName, address tableContract, uint tableId) external;
+}
+
 contract userTables is ERC721Holder {
     using Counters for Counters.Counter; // OpenZepplin Counter
     Counters.Counter private _tableCount; // Counter For Proposals
 
     address public owner;
+    RouterContract routerContract;
 
     // table struct
-    struct Table { 
+    struct Table {
         uint256 tableId;
         string tablePrefix;
         string tableName;
@@ -39,8 +44,9 @@ contract userTables is ERC721Holder {
     // mapping of a table id to the reward for the table
     mapping (uint256 => Reward) tableReward;
 
-    constructor() {
+    constructor(address _routerContract) {
         owner = msg.sender;
+        routerContract = RouterContract(_routerContract);
     }
 
     // function to create a table
@@ -55,25 +61,29 @@ contract userTables is ERC721Holder {
                 tablePrefix // the needed prefix for table
             )
         );
+
+        string tableName = string.concat(
+            tablePrefix, "_", Strings.toString(block.chainid), "_", Strings.toString(id)
+        );
+
         Tables[_tableCount.current()].description = description;
         Tables[_tableCount.current()].tablePrefix = tablePrefix;
         Tables[_tableCount.current()].tableId = id;
-        Tables[_tableCount.current()].responseCount = 0;
-        Tables[_tableCount.current()].tableName = string.concat(
-            tablePrefix, "_", Strings.toString(block.chainid), "_", Strings.toString(id)
-        );
+        Tables[_tableCount.current()].tableName = tableName;
+
         fieldNames[_tableCount.current()] = fieldName;
+        routerContract.addTable(msg.sender, tableName, address(this), _tableCount.current());
         _tableCount.increment();
     }
 
     // function to return table
-    function getTable(uint256 id) public view returns(uint256, string memory, string memory, string memory) {
-        return (Tables[id].tableId, Tables[id].tablePrefix, Tables[id].tableName, Tables[id].description);
+    function getTable(uint256 id) public view returns(string memory, string memory) {
+        return (Tables[id].tablePrefix, Tables[id].description);
     }
 
     // function to write to a table
     // implement function to check if an answer is correct
-    function writeTable(uint256 id, string[] memory responses) public payable {
+    function writeTable(uint256 id, string[] memory responses) public payable { // implement tableland access control function for fees
           string memory writeQuery = concatWriteArray(fieldNames[id]);
           string memory inputString = concatWriteArray(responses);
           TablelandDeployments.get().mutate(
@@ -95,6 +105,12 @@ contract userTables is ERC721Holder {
         if (IERC20(tableReward[id].tokenAddress).balanceOf(address(this)) >= tableReward[id].singleAmount && tableReward[id].totalAmount >= tableReward[id].singleAmount) {
             IERC20(tableReward[id].tokenAddress).transfer(msg.sender, tableReward[id].singleAmount);
         }
+
+        Tables[_tableCount.current()].responseCount += 1;
+    }
+
+    function getResponseCount(uint256 id) public view returns(uint256) {
+        return Tables[id].responseCount;
     }
 
     function concatCreationArray(string[] memory fields, string[] memory types) internal pure returns (string memory) {
