@@ -9,7 +9,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 interface RouterContract {
-    function addTable(address formOwner, string memory tableName, address tableContract, uint tableId) external;
+    function addTable(address formOwner, string memory tableName, address tableContract, uint256 tableId) external;
 }
 
 contract userTables is ERC721Holder {
@@ -38,11 +38,14 @@ contract userTables is ERC721Holder {
     // mapping table counters to tables
     mapping (uint256 => Table) Tables;
 
-    // mapping tableIds to field names
-    mapping (uint256 => string[]) fieldNames;
-
     // mapping of a table id to the reward for the table
     mapping (uint256 => Reward) tableReward;
+
+    // mapping of a table prefix to the table name
+    mapping (string => string) tableNames;
+
+    // mapping of ids to writeString
+    mapping (uint256 => string) writeQueries;
 
     constructor(address _routerContract) {
         owner = msg.sender;
@@ -50,19 +53,17 @@ contract userTables is ERC721Holder {
     }
 
     // function to create a table
-    function createTable(string memory tablePrefix, string[] memory fieldName, string[] memory fieldType, string memory description) public onlyOwner {
-        require(fieldName.length == fieldType.length && fieldName.length == 5);
+    function createTable(string memory tablePrefix, string memory createString, string memory description, string memory writeQuery) public onlyOwner {
 
-        string memory createQuery = concatCreationArray(fieldName, fieldType);
         uint256 id = TablelandDeployments.get().create( // creating a table ID
             address(this), // setting it's owner to the address for easy write access
             SQLHelpers.toCreateFromSchema(
-                createQuery,
+                string.concat("id integer primary key,", createString),
                 tablePrefix // the needed prefix for table
             )
         );
 
-        string tableName = string.concat(
+        string memory tableName = string.concat(
             tablePrefix, "_", Strings.toString(block.chainid), "_", Strings.toString(id)
         );
 
@@ -71,40 +72,36 @@ contract userTables is ERC721Holder {
         Tables[_tableCount.current()].tableId = id;
         Tables[_tableCount.current()].tableName = tableName;
 
-        fieldNames[_tableCount.current()] = fieldName;
-        routerContract.addTable(msg.sender, tableName, address(this), _tableCount.current());
+        tableNames[tablePrefix] = tableName;
+        writeQueries[_tableCount.current()] = writeQuery;
+        
         _tableCount.increment();
     }
 
     // function to return table
-    function getTable(uint256 id) public view returns(string memory, string memory) {
-        return (Tables[id].tablePrefix, Tables[id].description);
+    function getTable(uint256 id) public view returns(Table memory, string memory) {
+        return (Tables[id], writeQueries[id]);
     }
 
     // function to write to a table
     // implement function to check if an answer is correct
     function writeTable(uint256 id, string[] memory responses) public payable { // implement tableland access control function for fees
-          string memory writeQuery = concatWriteArray(fieldNames[id]);
-          string memory inputString = concatWriteArray(responses);
+          string memory response = concatWriteArray(responses);
+          string memory writeQuery = writeQueries[id];
           TablelandDeployments.get().mutate(
             address(this),
             Tables[id].tableId,
             SQLHelpers.toInsert(
             Tables[id].tablePrefix,
             Tables[id].tableId,
-            writeQuery,
-            inputString
+            string.concat("id,", writeQuery),
+            string.concat(
+            Strings.toString(Tables[id].responseCount), // Convert to a string
+            ",",
+            response
+            )
             )
         );
-
-        if (address(this).balance >= tableReward[id].singleAmount && tableReward[id].totalAmount >= tableReward[id].singleAmount) {
-            (bool sent, bytes memory data) = payable(msg.sender).call{value: tableReward[id].singleAmount}("");
-            require(sent, "failed to send ether");
-        }
-
-        if (IERC20(tableReward[id].tokenAddress).balanceOf(address(this)) >= tableReward[id].singleAmount && tableReward[id].totalAmount >= tableReward[id].singleAmount) {
-            IERC20(tableReward[id].tokenAddress).transfer(msg.sender, tableReward[id].singleAmount);
-        }
 
         Tables[_tableCount.current()].responseCount += 1;
     }
@@ -113,43 +110,19 @@ contract userTables is ERC721Holder {
         return Tables[id].responseCount;
     }
 
-    function concatCreationArray(string[] memory fields, string[] memory types) internal pure returns (string memory) {
-        require(fields.length == types.length);
-        string memory queryString;
-        for (uint i = 0; i < fields.length; i++) {
-            if (i == 0) {
-            queryString = string.concat(
-                fields[i], " ", types[i], " ", "primary key", ","
-            );
-            } else if(i == (fields.length - 1)) {
-            queryString = string.concat(
-                queryString,
-                fields[i], " ", types[i]
-            );
-            }
-            else {
-            queryString = string.concat(
-                queryString,
-                fields[i], " ", types[i], ","
-            );
-            }
-        }
-        return queryString;
-    }
-
     function concatWriteArray(string[] memory fields) internal pure returns (string memory) {
         string memory queryString;
         for (uint i = 0; i < fields.length; i++) {
             if(i == (fields.length - 1)) {
             queryString = string.concat(
                 queryString,
-                fields[i]
+                SQLHelpers.quote(fields[i])
             );
             }
             else {
             queryString = string.concat(
                 queryString,
-                fields[i], ","
+                SQLHelpers.quote(fields[i]), ","
             );
             }
         }

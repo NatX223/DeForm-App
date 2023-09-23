@@ -38,9 +38,9 @@ contract Router is ERC721Holder {
             address(this), // setting it's owner to the address for easy write access
             SQLHelpers.toCreateFromSchema(
                 "id integer primary key,"
-                "tableName,"
-                "tableContract,"
-                "tableId",
+                "tableName text,"
+                "tableContract text,"
+                "tableId integer",
                 "RouterTable"
             )
         );
@@ -58,7 +58,7 @@ contract Router is ERC721Holder {
     }
 
     // function to write to a table
-    function addTable(address formOwner, string memory tableName, address tableContract, uint tableId) public {
+    function addTable(address formOwner, string memory tableName, address tableContract, uint256 tableId) public {
           setContract(formOwner, tableContract);
           TablelandDeployments.get().mutate(
             address(this),
@@ -66,7 +66,7 @@ contract Router is ERC721Holder {
             SQLHelpers.toInsert(
             Tables[1].tablePrefix,
             Tables[1].tableId,
-            "tableName,tableContract,tableId",
+            "id,tableName,tableContract,tableId",
             string.concat(
                 Strings.toString(uint256(_RouterTableCountId.current())),
                 ",",
