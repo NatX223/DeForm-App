@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import toast from "react-hot-toast";
-import { _createForm, createForm, getUser, getUserAddress } from '../utils/app';
+import { _createForm, createForm, getUser, getUserAddress, shortenUrl } from '../utils/app';
+
 
 function MyForm() {
   const [questions, setquestions] = useState([]);
@@ -8,8 +9,15 @@ function MyForm() {
   const [formName, setFormName] = useState(
     'form Name'
   );
+
+  const [formLink, setFormLink] = useState();
+
   const [formDescription, setFormDescription] = useState(
     'form Description'
+  );
+
+  const [formFee, setFormFee] = useState(
+    0
   );
 
   // Function to handle adding new input fields
@@ -31,6 +39,10 @@ function MyForm() {
     setInputType(newinputtypes);
   };
 
+  const handleFeeValueChange = (value) => {
+    setFormFee(value);
+  };
+
   const handleFormNameValueChange = (value) => {
     setFormName(value);
   };
@@ -39,20 +51,41 @@ function MyForm() {
     setFormDescription(value);
   };
 
+  const copyToClipboard = (text) => {
+    if (!navigator.clipboard) {
+      // Clipboard API not supported, fallback to old method
+      const textArea = document.createElement("textarea");
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      return;
+    }
+  
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast.success("You copied your link");
+      })
+      .catch(err => {
+        console.error('Unable to copy text: ', err);
+      });
+  }
+
   // Function to handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    // You can now access questions array to get the values
-    // steps
-    // 1. get all inputs
-    // 2. pass them into the function
     // 3. construct table name and create link
-    console.log(questions, inputTypes, formName, formDescription);
-
     try {
-      await createForm(questions, inputTypes, formName, formDescription);
+      const _formName = await createForm(questions, inputTypes, formName, formDescription, formFee);
       console.log(questions, inputTypes, formName, formDescription);
-      toast.success("Form created Successfuly");
+      toast.success(`${formName} was created Successfuly`);
+
+      const link = `${window.location.href}/Form?name=${_formName}`;
+      const updated = link.replace('/createForm/', '/');
+      const shortLink = await shortenUrl(updated);
+      setFormLink(shortLink);
+      
     } catch (error) {
       toast.error("Something went wrong")
       console.error(error);
@@ -82,6 +115,15 @@ function MyForm() {
                 type="text"
                 value={formDescription}
                 onChange={(e) => handleFormDescriptionValueChange(e.target.value)}
+              />
+            <label className='text-lg text-[#0070f3]'>
+              Form Fee
+            </label>
+              <input
+                className="border border-gray-300 rounded p-1 bg-gray-500 text-white"
+                type="number"
+                value={formFee}
+                onChange={(e) => handleFeeValueChange(e.target.value)}
               />
             </div>
             {questions.map((questionValue, index) => (
@@ -115,7 +157,7 @@ function MyForm() {
               </select>
             </div>
             ))}
-            <div style={{ display: 'flex', gap: '300px' }}>
+            <div style={{ display: 'flex', gap: '100px' }}>
               <button
                 type='button'
                 onClick={addQuestion}
@@ -132,6 +174,15 @@ function MyForm() {
               <span className="absolute rounded-lg inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-[#0070f3] border-[2px] border-black group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
               <span className="absolute rounded-lg inset-0 w-full h-full bg-white border-2 border-black group-hover:bg-[#0070f3]"></span>
               <span className="relative text-black">Create Form</span>
+              </button>
+              <button
+                type='button'
+                onClick={() => copyToClipboard(formLink)}
+                className="relative inline-block px-4 py-2 font-medium group"
+              >
+              <span className="absolute rounded-lg inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-[#0070f3] border-[2px] border-black group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
+              <span className="absolute rounded-lg inset-0 w-full h-full bg-white border-2 border-black group-hover:bg-[#0070f3]"></span>
+              <span className="relative text-black">Copy Link</span>
               </button>
             </div>
             </form>

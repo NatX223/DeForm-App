@@ -2,12 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol"; // Import Ownable contract
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
-contract DeformMarketPlace is ERC721, Ownable { // Inherit from Ownable
+contract DeformMarketPlace { // Inherit from Ownable
     using Counters for Counters.Counter;
-    Counters.Counter private _tokenID;
+    Counters.Counter internal _dataId;
 
     // enum to indicate the different sectors forms could be in
     // in health, financials, politics, education etc
@@ -17,45 +16,40 @@ contract DeformMarketPlace is ERC721, Ownable { // Inherit from Ownable
     struct Details {
         address lister;
         uint256 price;
-        bool onSale; // you can rename this to whatever you like but it should indicate if the NFT is still up for sale or not
+        bool onSale;
         uint256 sector;
-        string ipfsHash; // you could rename this, but should indicate the IPFS hash of the data set
+        uint256 tablelandId;
+        address listerContract;
     }
+
+    IERC721 Tableland;
 
     // mapping to hold price of token
     mapping(uint256 => Details) public tokenDetails;
 
-    constructor(string memory name_, string memory symbol_) ERC721(name_, symbol_) {}
-
-    // function to list a dataset as NFT
-    function createDataset(uint256 price, uint256 sector, string memory IPFSHash) public {
-        uint256 tokenId = _tokenID.current(); // Get the current token ID
-        _mint(msg.sender, tokenId); // Mint the NFT to the sender
-        tokenDetails[tokenId] = Details({
-            lister: msg.sender,
-            price: price,
-            onSale: true,
-            sector: sector,
-            ipfsHash: IPFSHash
-        });
-        _tokenID.increment(); // Increment the token ID counter
+    constructor(address registryAddress) {
+        Tableland = IERC721(registryAddress);
     }
 
     // function to list an already existing dataset
-    function listDataset(uint256 tokenID, uint256 price) public onlyOwner notForSale(tokenID) {
-        tokenDetails[tokenID].price = price; // Update the price
-        tokenDetails[tokenID].onSale = true; // Set it as on sale
-        transferFrom(ownerOf(tokenID), address(this), tokenID); // Transfer the token to the contract
+    function listDataset(uint256 price, uint256 _sector, uint256 tablelandId, address lister, address listerContract) public notForSale(_dataId.current()) {
+        tokenDetails[_dataId.current()].lister = lister;
+        tokenDetails[_dataId.current()].price = price; 
+        tokenDetails[_dataId.current()].sector = _sector;
+        tokenDetails[_dataId.current()].tablelandId = tablelandId;
+        tokenDetails[_dataId.current()].onSale = true;
+        tokenDetails[_dataId.current()].listerContract = listerContract;
+        _dataId.increment();
     }
 
     // function to delist a dataset
-    function delistDataset(uint256 tokenID) public onlyOwner isForSale(tokenID) {
-        tokenDetails[tokenID].onSale = false; // Update onSale value to false
+    function delistDataset(uint256 id) public isForSale(id) {
+        tokenDetails[id].onSale = false; // Update onSale value to false
     }
 
     // function to buy datasets
-    function buyDataset(uint256 tokenID) public payable isPrice(tokenID) {
-        Details storage details = tokenDetails[tokenID];
+    function buyDataset(uint256 id) public payable isPrice(id) isForSale(id) {
+        Details storage details = tokenDetails[id];
         address lister = details.lister;
         uint256 price = details.price;
 
@@ -64,8 +58,8 @@ contract DeformMarketPlace is ERC721, Ownable { // Inherit from Ownable
         require(msg.value == price, "Incorrect amount sent");
 
         details.onSale = false; // Remove it from being on sale
-        transferFrom(address(this), msg.sender, tokenID); // Transfer ownership to the new owner
         payable(lister).transfer(price); // Transfer the amount to the lister
+        Tableland.transferFrom(tokenDetails[id].listerContract, msg.sender, tokenDetails[id].tablelandId);
     }
 
     // modifiers

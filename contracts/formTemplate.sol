@@ -6,22 +6,34 @@ import "@tableland/evm/contracts/utils/SQLHelpers.sol";
 import "@openzeppelin/contracts/utils/Strings.sol";
 import "@openzeppelin/contracts/token/ERC721/utils/ERC721Holder.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC1155/ERC1155.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 interface RouterContract {
-    function addTable(address formOwner, string memory tableName, address tableContract, uint256 tableId) external;
+    function addTable(address formOwner, string memory tablePrefix, address tableContract, uint256 tableId) external;
 }
 
-contract userTables is ERC721Holder {
+interface MarketPlace {
+    function listDataset(uint256 price, uint256 _sector, uint256 tablelandId, address lister, address listerContract) external;
+    function delistDataset(uint256 id) external;
+}
+
+contract userTables is ERC721Holder, ERC1155 {
     using Counters for Counters.Counter; // OpenZepplin Counter
     Counters.Counter private _tableCount; // Counter For Proposals
 
     address public owner;
+    address public controllerContract;
+    address public marketAddress;
+
+    IERC721 Tableland;
     RouterContract routerContract;
+    MarketPlace marketPlace;
 
     // table struct
     struct Table {
         uint256 tableId;
+        uint256 tablelandId;
         string tablePrefix;
         string tableName;
         string description;
@@ -41,18 +53,25 @@ contract userTables is ERC721Holder {
     // mapping of a table id to the reward for the table
     mapping (uint256 => Reward) tableReward;
 
-    // mapping of a table prefix to the table name
-    mapping (string => string) tableNames;
-
     // mapping of ids to writeString
     mapping (uint256 => string) writeQueries;
 
-    constructor(address _routerContract) {
+    // mapping to check if a filling a table is rewarded with an NFT
+    mapping (uint256 => bool) mintable;
+
+    constructor(address _routerContract, address _controllerContract, address registryAddress, address _marketPlace) ERC1155("hash") {
         owner = msg.sender;
         routerContract = RouterContract(_routerContract);
+        controllerContract = _controllerContract;
+        Tableland = IERC721(registryAddress);
+        marketPlace = MarketPlace(_marketPlace);
+        marketAddress = _marketPlace;
+
     }
 
     // function to create a table
+    // try creating the table first then
+    // setting the access controller to the contract
     function createTable(string memory tablePrefix, string memory createString, string memory description, string memory writeQuery) public onlyOwner {
 
         uint256 id = TablelandDeployments.get().create( // creating a table ID
@@ -69,26 +88,35 @@ contract userTables is ERC721Holder {
 
         Tables[_tableCount.current()].description = description;
         Tables[_tableCount.current()].tablePrefix = tablePrefix;
-        Tables[_tableCount.current()].tableId = id;
+        Tables[_tableCount.current()].tableId = _tableCount.current();
+        Tables[_tableCount.current()].tablelandId = id;
         Tables[_tableCount.current()].tableName = tableName;
-
-        tableNames[tablePrefix] = tableName;
+        
+        TablelandDeployments.get().setController(address(this), id, controllerContract);
+        
         writeQueries[_tableCount.current()] = writeQuery;
         
+        routerContract.addTable(msg.sender, tablePrefix, address(this), _tableCount.current());
         _tableCount.increment();
     }
 
-    // function to return table
-    function getTable(uint256 id) public view returns(Table memory, string memory) {
-        return (Tables[id], writeQueries[id]);
+    // implement access control
+    function getTableName(uint256 id) public view returns(string memory tableName) {
+        tableName = Tables[id].tableName;
+    }
+
+    function getColumns(uint256 id) public view returns(string memory columns) {
+        columns = writeQueries[id];
     }
 
     // function to write to a table
-    // implement function to check if an answer is correct
-    function writeTable(uint256 id, string[] memory responses) public payable { // implement tableland access control function for fees
+    // implements tableland access control function for fees
+    function writeTable(uint256 id, string[] memory responses) public payable {
           string memory response = concatWriteArray(responses);
           string memory writeQuery = writeQueries[id];
-          TablelandDeployments.get().mutate(
+        //   check for native rewards
+          if (address(this).balance > tableReward[id].singleAmount && tableReward[id].totalAmount > 0) {
+          TablelandDeployments.get().mutate{value:msg.value}(
             address(this),
             Tables[id].tableId,
             SQLHelpers.toInsert(
@@ -103,11 +131,60 @@ contract userTables is ERC721Holder {
             )
         );
 
+        (bool sent, bytes memory data) = payable(msg.sender).call{value: msg.value}("");
+        require(sent, "Failed to send Ether");
         Tables[_tableCount.current()].responseCount += 1;
+          } else {
+            TablelandDeployments.get().mutate{value:msg.value}(
+            address(this),
+            Tables[id].tableId,
+            SQLHelpers.toInsert(
+            Tables[id].tablePrefix,
+            Tables[id].tableId,
+            string.concat("id,", writeQuery),
+            string.concat(
+            Strings.toString(Tables[id].responseCount), // Convert to a string
+            ",",
+            response
+            )
+            )
+        );
+        Tables[_tableCount.current()].responseCount += 1;
+        }
+
     }
 
-    function getResponseCount(uint256 id) public view returns(uint256) {
-        return Tables[id].responseCount;
+    function getCount() public view returns(uint256) {
+        return _tableCount.current();
+    }
+
+    function getTable(uint256 id) public view returns(uint256, string memory, string memory, string memory, uint256) {
+        return(Tables[id].tableId, Tables[id].tablePrefix, Tables[id].description, writeQueries[id], Tables[id].responseCount);
+    }
+
+    // function to uppdate controller
+    function updateController(uint256 id, address controller) public onlyOwner {
+        TablelandDeployments.get().setController(address(this), Tables[id].tablelandId, controller);
+    }
+
+    // function to add a reward for filling a form
+    function addRewardNative(uint256 id, uint256 singleAmount) public payable onlyOwner {
+        // map it to the tableId
+        tableReward[id].totalAmount = msg.value;
+        // define what each response should get
+        tableReward[id].singleAmount = singleAmount;
+    }
+
+    // function to list Table
+    function listTable(uint256 id, uint256 price, uint256 sector) public onlyOwner {
+        marketPlace.listDataset(price, sector, Tables[id].tablelandId, msg.sender, address(this));
+        Tableland.approve(marketAddress, Tables[id].tablelandId);
+    }
+
+    // function to delist dataset
+    function deListTable(uint256 id) public onlyOwner {
+        marketPlace.delistDataset(price, sector, Tables[id].tablelandId, msg.sender, address(this));
+        Tableland.approve(address(0), Tables[id].tablelandId);
     }
 
     function concatWriteArray(string[] memory fields) internal pure returns (string memory) {
@@ -129,24 +206,8 @@ contract userTables is ERC721Holder {
         return queryString;
     }
 
-    // function to add a reward for filling a form
-    function addRewardNative(uint256 id, uint256 singleAmount) public payable onlyOwner {
-        // map it to the tableId
-        tableReward[id].totalAmount = msg.value;
-        // define what each response should get
-        tableReward[id].singleAmount = singleAmount;
-    }
-
-    // function to add a reward for filling a form
-    function addRewardToken(uint256 id, uint256 totalAmount, uint256 singleAmount, address tokenAddress) public onlyOwner {
-        // put some tokens into the contract
-        IERC20(tokenAddress).transferFrom(msg.sender, address(this), totalAmount);
-        
-        tableReward[id].totalAmount = totalAmount;
-        // define what each response should get
-        tableReward[id].singleAmount = singleAmount;
-        tableReward[id].tokenAddress = tokenAddress;
-    }  
+    // implement addFee function
+    // prolly do that with tableland access control
 
     modifier onlyOwner {
         require(msg.sender == owner);
