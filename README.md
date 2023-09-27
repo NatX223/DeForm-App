@@ -1,49 +1,144 @@
+# README.md
+![Alt text](https://github.com/NatX223/DeForm-App/blob/main/Screenshot%202023-09-27%20at%2023.44.18.jpeg)
 # DeForm-App
-decentralized form application
-# Description of the project
-DeForm app is a decentralized form creation platform ained getting more value out of forms
-This can be accomplished by
-1. Imposing fees for users who fill the forms
-2. giving out rewards/NFTs for filling forms
-3. Curating form respponses and selling them off as datasets
-# Getting started
-Your README should provide clear instructions for users on how to set up Node.js, npm (Node Package Manager), and Next.js to run your project on their local devices. Here's an example of how you can structure this section:
 
-### Getting Started
+  
 
-To run this project locally on your computer, you will need to have Node.js and npm installed. If you haven't already, follow these steps to set up your development environment:
+## Project Description
 
-1. **Install Node.js:** If you don't have Node.js installed, download and install it from the official website: [Node.js Downloads](https://nodejs.org/en/download/)
+DeForm is a revolutionary platform designed to address several critical challenges related to data collection, sharing, and incentives through interactive forms. In today's data-driven world, the value of data cannot be overstated, and DeForm aims to empower individuals and organizations by providing a solution that not only collects data efficiently but also ensures that data contributors are rewarded for their participation.
 
-   To check if you have Node.js installed, open your terminal and run:
-   node -v
-   You should see the installed Node.js version. Make sure it's at least version 14 or later.
+## Deployed App
 
-2. **Install npm:** npm (Node Package Manager) is usually included with Node.js. To check if you have npm installed, run:
-   npm -v
-   This will display the installed npm version.
-3. **Install Next.js:**
-   Next.js is a JavaScript framework built on top of Node.js, and it simplifies the process of building React applications. You can install it globally using npm:
-   npm install -g next
-   This command installs Next.js globally on your system.
-### Installing Project Dependencies
-Now that you have Node.js, npm, and Next.js installed, you can set up this project by following these steps:
-1. **Clone the Repository:** First, clone this project's repository to your local machine using Git. Open your terminal and run:
-   git clone https://github.com/yourusername/yourproject.git
-   Replace `yourusername` and `yourproject` with the actual GitHub username and project name.
-2. Navigate to the Project Directory: Change your current directory to the project directory:
-   cd yourproject
-3. **Install Project Dependencies:** Use npm to install the required project dependencies:
-   npm install
-   This command will read the `package.json` file and install all the necessary packages.
-# Running the Project Locally
-Once you have installed the project dependencies, you can start the development server locally:
-npm run dev
-This command will start the Next.js development server, and you should see output similar to the following:
-Ready on http://localhost:3000
-Open your web browser and navigate to [http://localhost:3000](http://localhost:3000) to access the locally running project.
-That's it! You now have Node.js, npm, and Next.js set up, and you can run the project on your local machine for development and testing.
-Remember to customize these instructions based on the specific details of your project, including any additional setup steps or configuration that might be required.
+
+Public URL: 
+
+
+Contract is deployed on Polygon Mumbai Testnet
+
+### Smart Contract Layer
+
+The smart contract layer consists of four interconnected contracts: DeformMarketPlace (Layer 1), userTables (Layer 2), controller (Layer 3), and Router (Layer 4). These contracts collectively enable the management and trading of datasets as NFTs. Here's an overview of their roles and interactions:
+
+DeformMarketPlace (Layer 1):
+
+Manages the dataset marketplace for NFTs.
+Allows users to list, purchase, and delist datasets.
+Interfaces with the ERC721 token contract (Tableland) to transfer NFTs.
+Defines dataset details using a struct and sectors using enums.
+Implements modifiers to ensure dataset availability and correct pricing.
+
+userTables (Layer 2):
+
+Facilitates the creation and management of tables (forms or data structures).
+Inherits from ERC721Holder and ERC1155.
+Users can create tables, write data, and list tables on the marketplace.
+Interacts with a router contract and a marketplace contract.
+Provides features such as access control policies, rewards for form filling, and controller updates.
+
+controller (Layer 3):
+
+Functions as a data access controller.
+Defines policies for access control (insert, update, delete) based on the caller's address.
+Allows setting fees for writing to the contract.
+Enables customization of access control policies.
+Implements the TablelandController interface and returns access policies.
+
+Router (Layer 4):
+
+Serves as a router to associate form owners with their respective table contracts.
+Users can add tables to the router to link form owners and table contracts.
+Provides functions for retrieving table information and associated contracts.
+Utilizes the OpenZeppelin Counters library for managing table IDs.
+
+Together, these contracts create a multi-layered system for efficiently managing and trading datasets as NFTs. Users can create tables, write data, list tables for sale, and purchase datasets on the marketplace. Access control is enforced through controllers and customizable policies. This layer leverages OpenZeppelin Contracts for the creation of ERC-721 tokens from metadata, allowing datasets to be represented as NFTs.
+
+
+
+  
+
+
+
+
+
+## Project structure
+deform-app
+```
+├── contracts
+│   ├── DeForm.sol     	
+│   ├── OtherContracts.sol 
+
+│   └── ...
+│
+├── scripts
+│   ├── deploy_DeForm.js   
+
+│   ├── deploy_Other.js	
+
+│   └── ...
+│
+├── tests
+│   ├── DeForm.test.js 	
+│   ├── OtherTests.js  	
+│   └── ...
+│
+├── assets             	
+│   ├── nft_image.png
+│   ├── ...
+```
+#### Frontend:   
+```
+│   ├── node_modules   	
+│   ├── package-lock.json  
+│   ├── package.json   	
+│   ├── postcss.config.js  
+│   ├── public         	
+│   ├── src            	
+│   │   ├── components 	
+│   │   ├── pages      	
+│   │   ├── styles     
+│   │   ├── ...
+│   ├── tailwind.config.js 
+│   └── tsconfig.json  	
+│
+├── hardhat.config.js   	
+│
+├── node_modules        	
+│
+├── package-lock.json   	
+│
+├── package.json        	
+
+```
+
+
+
+## Local Setup
+Project was built and tested against:
+* Node v19.7.0
+* Npm v9.5.0
+
+* **Ensure dotenv is setup with team 4 keys/signers** 
+
+#### Smart Contracts
+1. From the repo root run ``npm install``
+2. Once install is complete:
+	 * To **compile** the contract(s) run: 
+	 ``npx hardhat compile``
+	 * To **test** the contract(s) run: 
+	 ``npx hardhat --network hardhat test``
+	 * To **run** contracts run: 
+	 ``npx hardhat --network hardhat run scripts/deployHashHive.js``
+
+	
+#### **Frontend:**
+ - Cd to the **frontend** directory.
+ - Run ``npm install``
+ - Once install is complete:
+	 * To start, run: 
+	 ``npm run start``
+- App will be accessible via http://localhost:3000/
+
 
 ### Sponsor Technologies
 1. Tableland
