@@ -1,13 +1,58 @@
 import Head from 'next/head';
 import dynamic from "next/dynamic";
-
+import FormSalePreview from "../components/FormSale";
+import { useState, useEffect } from 'react';
+import { getFormsForSale } from '../utils/app';
 
 export default function Home() {
 
-// Dynamic import to avoid SSR issues
-const FormSalePreview = dynamic(() => import("../components/FormSale"), {
-    ssr: false,
-  });
+    const [items, setItems] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+    const fetchData = async () => {
+        let _items;
+        setIsLoading(true);
+        try {
+            _items = await getFormsForSale();
+            setItems(_items);
+            console.log(_items);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    useEffect( () => {
+        fetchData();
+      }, []);
+
+      if (isLoading) {
+        return <div>
+          <div class="flex flex-col w-1/2 gap-5 p-2 mx-auto bg-white shadow-lg select-none sm:p-4 sm:h-64 rounded-2xl sm:flex-row ">
+              <div class="bg-gray-200 h-52 sm:h-full sm:w-72 rounded-xl animate-pulse">
+              </div>
+              <div class="flex flex-col flex-1 gap-5 sm:p-2">
+                  <div class="flex flex-col flex-1 gap-3">
+                      <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                      </div>
+                      <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                      </div>
+                      <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                      </div>
+                      <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                      </div>
+                  </div>
+                  <div class="flex gap-3 mt-auto">
+                      <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                      </div>
+                      <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                      </div>
+                      <div class="w-20 h-8 ml-auto bg-gray-200 rounded-full animate-pulse">
+                      </div>
+                  </div>
+              </div>
+          </div>
+        </div>
+      }
 
   return (
     <div>
@@ -56,6 +101,10 @@ const FormSalePreview = dynamic(() => import("../components/FormSale"), {
         <div class="h-screen pt-2 pb-24 pl-2 pr-2 overflow-auto md:pt-0 md:pr-0 md:pl-0">
         <div class="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-3">
                 <FormSalePreview />
+                {items &&
+                items.map((item, index) => (
+                  <FormSalePreview key={index} item={item} />
+                ))}
             </div>
         </div>
         </div>

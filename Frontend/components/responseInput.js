@@ -1,25 +1,35 @@
 import React, { useState } from 'react';
-import { submitForm } from '../utils/app';
+import { storeFiles, submitForm } from '../utils/app';
 import toast from 'react-hot-toast';
 
 function ResponseField({ formQuestions }) {
 
-const [formData, setFormData] = useState({});
+const [formData, setFormData] = useState([]);
 
 const handleInputChange = (event) => {
     const { name, value } = event.target;
     // console.log(value);
     setFormData({
     ...formData,
-    [name]: value,
+    value,
     });
 };
+
+const  handleFileInputChange = async  (e) => {
+  const selectedFile = e.target.files;
+  const cid = await storeFiles(selectedFile);
+  console.log(cid);
+  setFormData({
+    ...formData,
+    cid
+  })
+}
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     try {
       const formDataArray = Object.entries(formData).map(([key, value]) => ({ question: key, answer: value }));
-      console.log(formDataArray);
+      console.log(formData, formDataArray);
       const searchParams = new URLSearchParams(window.location.search);
       const formName = searchParams.get('formName');  
       await submitForm(formName, formDataArray);
@@ -37,12 +47,21 @@ const handleInputChange = (event) => {
           <label className='text-lg text-[#0070f3]' style={{ marginBottom: '8px' }}>
             {questionObj.question}
           </label> <br />
-          <input
-            className="border border-gray-300 rounded p-1 bg-gray-500 text-white"
-            type={questionObj.inputType}
-            name={`${index}`}
-            onChange={handleInputChange}
-          />
+          {questionObj.inputType === 'file' ? (
+      <input
+        className="border border-gray-300 rounded p-1 bg-gray-500 text-white"
+        type="file"
+        name={`${index}`}
+        onChange={handleFileInputChange}
+      />
+    ) : (
+      <input
+        className="border border-gray-300 rounded p-1 bg-gray-500 text-white"
+        type={questionObj.inputType}
+        name={`${index}`}
+        onChange={handleInputChange}
+      />
+    )}
         </div>
       ))}
       <button

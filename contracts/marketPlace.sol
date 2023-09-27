@@ -17,9 +17,11 @@ contract DeformMarketPlace { // Inherit from Ownable
         address lister;
         uint256 price;
         bool onSale;
-        uint256 sector;
         uint256 tablelandId;
         address listerContract;
+        uint256 responseCount;
+        string tableName;
+        string tableDescription;
     }
 
     IERC721 Tableland;
@@ -32,19 +34,30 @@ contract DeformMarketPlace { // Inherit from Ownable
     }
 
     // function to list an already existing dataset
-    function listDataset(uint256 price, uint256 _sector, uint256 tablelandId, address lister, address listerContract) public notForSale(_dataId.current()) {
+    function listDataset(uint256 price, uint256 tablelandId, address lister, address listerContract, uint256 responseCount, string memory tableName, string memory tableDescription) public notForSale(_dataId.current()) {
         tokenDetails[_dataId.current()].lister = lister;
-        tokenDetails[_dataId.current()].price = price; 
-        tokenDetails[_dataId.current()].sector = _sector;
+        tokenDetails[_dataId.current()].price = price;
         tokenDetails[_dataId.current()].tablelandId = tablelandId;
         tokenDetails[_dataId.current()].onSale = true;
         tokenDetails[_dataId.current()].listerContract = listerContract;
+        tokenDetails[_dataId.current()].responseCount = responseCount;
+        tokenDetails[_dataId.current()].tableName = tableName;
+        tokenDetails[_dataId.current()].tableDescription = tableDescription;
+
         _dataId.increment();
+    }
+
+    function getDataset(uint256 id) public view returns(uint256, string memory, string memory, uint256, address, uint256) {
+        return(id, tokenDetails[id].tableName, tokenDetails[id].tableDescription, tokenDetails[id].price, tokenDetails[id].lister, tokenDetails[id].responseCount);
     }
 
     // function to delist a dataset
     function delistDataset(uint256 id) public isForSale(id) {
         tokenDetails[id].onSale = false; // Update onSale value to false
+    }
+
+    function getCount() public view returns(uint256) {
+        return(_dataId.current());
     }
 
     // function to buy datasets

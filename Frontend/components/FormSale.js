@@ -1,14 +1,14 @@
 
-export default function FormSalePreview() {
+export default function FormSalePreview({ item }) {
     return (
         <div class="w-full">
                         <div class="relative w-full px-4 py-6 bg-white shadow-lg dark:bg-gray-700">
                             <p class="text-sm font-bold text-lg text-gray-700 border-b border-gray-200 w-max dark:text-white">
-                                Form Name
+                                {item[1]}
                             </p>
                             <div class="flex items-end my-6 space-x-2">
                                 <p class="text text-black dark:text-white">
-                                    formDetails
+                                    {item[2]}
                                 </p>
                             </div>
                             <div class="dark:text-white">
@@ -17,7 +17,7 @@ export default function FormSalePreview() {
                                         Category
                                     </p>
                                     <div class="flex items-end text-xs">
-                                        Education
+                                        Protocol Survey
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between pb-2 mb-2 space-x-12 text-sm border-b border-gray-200 md:space-x-24">
@@ -33,7 +33,7 @@ export default function FormSalePreview() {
                                         Responses
                                     </p>
                                     <div class="flex items-end text-xs">
-                                        10
+                                        {item[5]}
                                     </div>
                                 </div>
                                 <div class="flex items-center justify-between space-x-12 text-sm md:space-x-24">
@@ -41,7 +41,7 @@ export default function FormSalePreview() {
                                         Price
                                     </p>
                                     <div class="flex items-end text-xs">
-                                        0.01 FIL
+                                        {Number(item[3])} MATIC
                                     </div>
                                 </div>
                                 <div class="flex items-center">

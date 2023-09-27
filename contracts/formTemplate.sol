@@ -14,7 +14,7 @@ interface RouterContract {
 }
 
 interface MarketPlace {
-    function listDataset(uint256 price, uint256 _sector, uint256 tablelandId, address lister, address listerContract) external;
+    function listDataset(uint256 price, uint256 tablelandId, address lister, address listerContract, uint256 responseCount, string memory tableName, string memory tableDescription) external;
     function delistDataset(uint256 id) external;
 }
 
@@ -132,14 +132,14 @@ contract userTables is ERC721Holder, ERC1155 {
 
         (bool sent, bytes memory data) = payable(msg.sender).call{value: msg.value}("");
         require(sent, "Failed to send Ether");
-        Tables[_tableCount.current()].responseCount += 1;
+        Tables[id].responseCount += 1;
           } else {
             TablelandDeployments.get().mutate{value:msg.value}(
             address(this),
-            Tables[id].tableId,
+            Tables[id].tablelandId,
             SQLHelpers.toInsert(
             Tables[id].tablePrefix,
-            Tables[id].tableId,
+            Tables[id].tablelandId,
             string.concat("id,", writeQuery),
             string.concat(
             Strings.toString(Tables[id].responseCount), // Convert to a string
@@ -148,7 +148,7 @@ contract userTables is ERC721Holder, ERC1155 {
             )
             )
         );
-        Tables[_tableCount.current()].responseCount += 1;
+        Tables[id].responseCount += 1;
         }
 
     }
@@ -161,29 +161,10 @@ contract userTables is ERC721Holder, ERC1155 {
         return(Tables[id].tableId, Tables[id].tablePrefix, Tables[id].description, writeQueries[id], Tables[id].responseCount);
     }
 
-    // function to uppdate controller
-    function updateController(uint256 id, address controller) public onlyOwner {
-        TablelandDeployments.get().setController(address(this), Tables[id].tablelandId, controller);
-    }
-
-    // function to add a reward for filling a form
-    function addRewardNative(uint256 id, uint256 singleAmount) public payable onlyOwner {
-        // map it to the tableId
-        tableReward[id].totalAmount = msg.value;
-        // define what each response should get
-        tableReward[id].singleAmount = singleAmount;
-    }
-
     // function to list Table
-    function listTable(uint256 id, uint256 price, uint256 sector) public onlyOwner {
-        marketPlace.listDataset(price, sector, Tables[id].tablelandId, msg.sender, address(this));
+    function listTable(uint256 id, uint256 price) public onlyOwner {
+        marketPlace.listDataset(price, Tables[id].tablelandId, msg.sender, address(this), Tables[id].responseCount, Tables[id].tablePrefix, Tables[id].description);
         Tableland.approve(marketAddress, Tables[id].tablelandId);
-    }
-
-    // function to delist dataset
-    function deListTable(uint256 id) public onlyOwner {
-        marketPlace.delistDataset();
-        Tableland.approve(address(0), Tables[id].tablelandId);
     }
 
     function concatWriteArray(string[] memory fields) internal pure returns (string memory) {
@@ -204,6 +185,22 @@ contract userTables is ERC721Holder, ERC1155 {
         }
         return queryString;
     }
+
+    // function to uppdate controller
+    function updateController(uint256 id, address controller) public onlyOwner {
+        TablelandDeployments.get().setController(address(this), Tables[id].tablelandId, controller);
+    }
+
+    // function to add a reward for filling a form
+    function addRewardNative(uint256 id, uint256 singleAmount) public payable onlyOwner {
+        // map it to the tableId
+        tableReward[id].totalAmount = msg.value;
+        // define what each response should get
+        tableReward[id].singleAmount = singleAmount;
+    }
+
+    // implement addFee function
+    // prolly do that with tableland access control
 
     modifier onlyOwner {
         require(msg.sender == owner);

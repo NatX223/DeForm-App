@@ -40,9 +40,9 @@ contract controller is TablelandController {
             });
         } else {
         return TablelandPolicy({
-            allowInsert: false,
-            allowUpdate: false,
-            allowDelete: false,
+            allowInsert: true,
+            allowUpdate: true,
+            allowDelete: true,
             whereClause: "",
             withCheck: "",
             updatableColumns: new string[](0)

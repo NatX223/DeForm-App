@@ -10,6 +10,16 @@ export const formABI = [
 				"internalType": "address",
 				"name": "_controllerContract",
 				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "registryAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "_marketPlace",
+				"type": "address"
 			}
 		],
 		"stateMutability": "nonpayable",
@@ -360,6 +370,37 @@ export const formABI = [
 				"internalType": "bool",
 				"name": "",
 				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			}
+		],
+		"name": "listTable",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "marketAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",

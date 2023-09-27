@@ -54,7 +54,7 @@ export default function formPreview({ item }) {
           get user address
           pass in the id and address
           use router to go to page */}
-          <a href={`/FormPage?params=${addressParam}${item[0]}`}>
+          <a href={`/FormPage?params=${item[0]}${addressParam}`}>
           <div className="flex items-center justify-start my-4 space-x-4">
               <span className="flex items-center px-2 py-1 text-xs font-semibold text-blue-500 bg-blue-100 rounded-md">
                   VIEW RESPONSES

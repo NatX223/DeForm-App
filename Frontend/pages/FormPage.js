@@ -1,16 +1,73 @@
 import Head from 'next/head';
 import dynamic from "next/dynamic";
-
+import { useEffect, useState } from "react";
+import { getResponses, splitString } from '../utils/app';
+import Response from '../components/Response';
+import FormDetails from '../components/formDetails';
 
 export default function Home() {
 
-// Dynamic import of Navbar to avoid SSR issues
-const FormDetails = dynamic(() => import("../components/formDetails"), {
-    ssr: false,
-  });
-  const Ressponse = dynamic(() => import("../components/Response"), {
-    ssr: false,
-  });
+  const [formResponses, setFormResponses] = useState([]);
+  const [formDetails, setDetails] = useState([]);
+  const [formAddress, setFormAddress] = useState(null);
+
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = async () => {
+    let responses;
+    let details;
+    let id;
+    let address;
+    let formAdd;
+     setIsLoading(true);
+     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const params = searchParams.get('params');
+      [id, address] = splitString(params);
+        [responses, details, formAdd] = await getResponses(params);
+        setFormResponses(responses);
+        setDetails(details);
+        setFormAddress(formAdd);
+        console.log(responses, details);
+     } catch (error) {
+        console.error(error);
+     } finally {
+        setIsLoading(false);
+     }
+  }
+
+  useEffect( () => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <div>
+      <div class="flex flex-col w-1/2 gap-5 p-2 mx-auto bg-white shadow-lg select-none sm:p-4 sm:h-64 rounded-2xl sm:flex-row ">
+          <div class="bg-gray-200 h-52 sm:h-full sm:w-72 rounded-xl animate-pulse">
+          </div>
+          <div class="flex flex-col flex-1 gap-5 sm:p-2">
+              <div class="flex flex-col flex-1 gap-3">
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+              </div>
+              <div class="flex gap-3 mt-auto">
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 ml-auto bg-gray-200 rounded-full animate-pulse">
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  }
 
   return (
     <div>
@@ -57,10 +114,10 @@ const FormDetails = dynamic(() => import("../components/formDetails"), {
         </div>
         <div className="flex flex-col w-full pl-0 md:p-4 md:space-y-4">
         <div className="h-screen pt-2 pb-24 pl-2 pr-2 overflow-auto md:pt-0 md:pr-0 md:pl-0">
-        <FormDetails />
+        <FormDetails item={formDetails}/>
         <div className="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-1">
-                <Ressponse />
-                <Ressponse />
+                <Response />
+                <Response />
             </div>
             <div className="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-3">
             <button className="relative inline-block px-4 py-2 font-medium group ">
