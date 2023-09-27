@@ -66,7 +66,6 @@ contract userTables is ERC721Holder, ERC1155 {
         Tableland = IERC721(registryAddress);
         marketPlace = MarketPlace(_marketPlace);
         marketAddress = _marketPlace;
-
     }
 
     // function to create a table
@@ -118,10 +117,10 @@ contract userTables is ERC721Holder, ERC1155 {
           if (address(this).balance > tableReward[id].singleAmount && tableReward[id].totalAmount > 0) {
           TablelandDeployments.get().mutate{value:msg.value}(
             address(this),
-            Tables[id].tableId,
+            Tables[id].tablelandId,
             SQLHelpers.toInsert(
             Tables[id].tablePrefix,
-            Tables[id].tableId,
+            Tables[id].tablelandId,
             string.concat("id,", writeQuery),
             string.concat(
             Strings.toString(Tables[id].responseCount), // Convert to a string
@@ -183,7 +182,7 @@ contract userTables is ERC721Holder, ERC1155 {
 
     // function to delist dataset
     function deListTable(uint256 id) public onlyOwner {
-        marketPlace.delistDataset(price, sector, Tables[id].tablelandId, msg.sender, address(this));
+        marketPlace.delistDataset();
         Tableland.approve(address(0), Tables[id].tablelandId);
     }
 
@@ -205,9 +204,6 @@ contract userTables is ERC721Holder, ERC1155 {
         }
         return queryString;
     }
-
-    // implement addFee function
-    // prolly do that with tableland access control
 
     modifier onlyOwner {
         require(msg.sender == owner);

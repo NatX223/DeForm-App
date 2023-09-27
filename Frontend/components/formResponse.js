@@ -1,16 +1,63 @@
+import { useEffect, useState } from "react";
 import ResponseField from "./responseInput";
+import { getForm } from "../utils/app";
 
-function FormResponse(form) {
-  // const formQuestions = [
-  //   { question: 'What is your name?', inputType: 'text' },
-  //   { question: 'What is your age?', inputType: 'number' },
-  //   { question: 'Where are you from?', inputType: 'text' },
-  //   { question: 'What is your favorite color?', inputType: 'text' },
-  // ];
-  const formQuestions = form[0];
-  const formDetails = form[1];
+function FormResponse() {
+  const [formQuestions, setFormQuestions] = useState([]);
+  const [formDetails, setDetails] = useState([]);
 
-  // const formDetails = ['Form Name', 'Form Description'];
+  const [isLoading, setIsLoading] = useState(false);
+
+  const fetchData = async () => {
+    let questions;
+    let details;
+     setIsLoading(true);
+     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const nameParam = searchParams.get('formName');    
+        [questions, details] = await getForm(nameParam);
+        setFormQuestions(questions);
+        setDetails(details);
+        console.log(questions, details);
+     } catch (error) {
+        console.error(error);
+     } finally {
+        setIsLoading(false);
+     }
+  }
+
+  useEffect( () => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <div>
+      <div class="flex flex-col w-1/2 gap-5 p-2 mx-auto bg-white shadow-lg select-none sm:p-4 sm:h-64 rounded-2xl sm:flex-row ">
+          <div class="bg-gray-200 h-52 sm:h-full sm:w-72 rounded-xl animate-pulse">
+          </div>
+          <div class="flex flex-col flex-1 gap-5 sm:p-2">
+              <div class="flex flex-col flex-1 gap-3">
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+              </div>
+              <div class="flex gap-3 mt-auto">
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 ml-auto bg-gray-200 rounded-full animate-pulse">
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  }
 
   return (
     <div className="card lg:card-side bg-white border-[2px] border-[#f2dbd0] ml-24 mr-24 rounded-2xl dark:bg-gray-700">

@@ -81,11 +81,10 @@ function MyForm() {
       console.log(questions, inputTypes, formName, formDescription);
       toast.success(`${formName} was created Successfuly`);
 
-      const link = `${window.location.href}/Form?name=${_formName}`;
+      const link = `${window.location.href}/Form?formName=${_formName}`;
       const updated = link.replace('/createForm/', '/');
-      const shortLink = await shortenUrl(updated);
-      setFormLink(shortLink);
-      
+      // const shortLink = await shortenUrl(updated);
+      setFormLink(updated);
     } catch (error) {
       toast.error("Something went wrong")
       console.error(error);
@@ -121,7 +120,7 @@ function MyForm() {
             </label>
               <input
                 className="border border-gray-300 rounded p-1 bg-gray-500 text-white"
-                type="number"
+                type="text"
                 value={formFee}
                 onChange={(e) => handleFeeValueChange(e.target.value)}
               />

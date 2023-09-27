@@ -1,13 +1,65 @@
+import { useEffect, useState } from "react";
 import Head from 'next/head';
 import dynamic from "next/dynamic";
-
+import { getUserForms } from "../utils/app";
 
 export default function Home() {
-
 // Dynamic import of Navbar to avoid SSR issues
 const FormPreview = dynamic(() => import("../components/formPreview"), {
     ssr: false,
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [formDetails, setFormDetails] = useState([]);
+
+  const fetchData = async () => {
+     
+     setIsLoading(true);
+     try {
+      const searchParams = new URLSearchParams(window.location.search);
+      const userAddress = searchParams.get('userAddress');    
+        const forms = await getUserForms(userAddress);
+        setFormDetails(forms);
+        console.log(forms);
+     } catch (error) {
+        console.error(error);
+     } finally {
+        setIsLoading(false);
+     }
+  }
+
+  useEffect( () => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return <div>
+      <div class="flex flex-col w-1/2 gap-5 p-2 mx-auto bg-white shadow-lg select-none sm:p-4 sm:h-64 rounded-2xl sm:flex-row ">
+          <div class="bg-gray-200 h-52 sm:h-full sm:w-72 rounded-xl animate-pulse">
+          </div>
+          <div class="flex flex-col flex-1 gap-5 sm:p-2">
+              <div class="flex flex-col flex-1 gap-3">
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+                  <div class="w-full h-3 bg-gray-200 animate-pulse rounded-2xl">
+                  </div>
+              </div>
+              <div class="flex gap-3 mt-auto">
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 bg-gray-200 rounded-full animate-pulse">
+                  </div>
+                  <div class="w-20 h-8 ml-auto bg-gray-200 rounded-full animate-pulse">
+                  </div>
+              </div>
+          </div>
+      </div>
+    </div>
+  }
 
   return (
     <div>
@@ -55,7 +107,10 @@ const FormPreview = dynamic(() => import("../components/formPreview"), {
         <div class="flex flex-col w-full pl-0 md:p-4 md:space-y-4">
         <div class="h-screen pt-2 pb-24 pl-2 pr-2 overflow-auto md:pt-0 md:pr-0 md:pl-0">
         <div class="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-1">
-                <FormPreview />
+                {formDetails &&
+                formDetails.map((form, index) => (
+                  <FormPreview key={index} item={form} />
+                ))}
             </div>
         </div>
         </div>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { submitForm } from '../utils/app';
+import toast from 'react-hot-toast';
 
 function ResponseField({ formQuestions }) {
 
@@ -7,6 +8,7 @@ const [formData, setFormData] = useState({});
 
 const handleInputChange = (event) => {
     const { name, value } = event.target;
+    // console.log(value);
     setFormData({
     ...formData,
     [name]: value,
@@ -15,9 +17,17 @@ const handleInputChange = (event) => {
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    const formDataArray = Object.entries(formData).map(([key, value]) => ({ question: key, answer: value }));
-    console.log(formDataArray);
-    await submitForm();
+    try {
+      const formDataArray = Object.entries(formData).map(([key, value]) => ({ question: key, answer: value }));
+      console.log(formDataArray);
+      const searchParams = new URLSearchParams(window.location.search);
+      const formName = searchParams.get('formName');  
+      await submitForm(formName, formDataArray);
+      toast.success("Form submitted successfully");
+    } catch (error) {
+      toast.error("something went wrong");
+      console.log(error);
+    }
   };
 
   return (

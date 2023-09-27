@@ -149,5 +149,55 @@ export const controllerABI = [
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "caller",
+				"type": "address"
+			},
+			{
+				"components": [
+					{
+						"internalType": "bool",
+						"name": "allowInsert",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "allowUpdate",
+						"type": "bool"
+					},
+					{
+						"internalType": "bool",
+						"name": "allowDelete",
+						"type": "bool"
+					},
+					{
+						"internalType": "string",
+						"name": "whereClause",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "withCheck",
+						"type": "string"
+					},
+					{
+						"internalType": "string",
+						"name": "updatableColumn",
+						"type": "string"
+					}
+				],
+				"internalType": "struct controller.Policy",
+				"name": "_policy",
+				"type": "tuple"
+			}
+		],
+		"name": "setPolicy",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
 	}
 ]

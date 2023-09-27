@@ -1,7 +1,7 @@
 
-export default function formPreview() {
-    // const queryParams = new URLSearchParams(window.location.search);
-    // const add = queryParams.toString();
+export default function formPreview({ item }) {
+    const searchParams = new URLSearchParams(window.location.search);
+    const addressParam = searchParams.get('userAddress'); 
     return (
         <div class="w-full sm:w-1/2 xl:w-1/3">
               <div className="mb-4">
@@ -11,11 +11,10 @@ export default function formPreview() {
               <div className="flex items-center">
                   <div className="flex flex-col">
                       <span className="ml-2 font-bold text-black text-md dark:text-white">
-                          Form Name
+                          {item[1]}
                       </span>
                       <span className="ml-2 text-sm text-gray-500 dark:text-white">
-                          Brief form description <br/>
-                          break if too long
+                        {item[2]}
                       </span>
                   </div>
               </div>
@@ -45,13 +44,17 @@ export default function formPreview() {
                   <span className="inline-block text-sm text-gray-500 dark:text-gray-100">
                       RESPONSES :
                       <span className="font-bold text-gray-700 dark:text-white">
-                          25
+                          {item[3]}
                       </span>
                   </span>
               </div>
           </div>
-          {/* <a href={`/createProposal?projectAddress=${Address}`}> */}
-          <a href="/FormPage">
+          {/* <a href={`/createProposal?userAddress=${Address}${id}`}> */}
+          {/* connect wallet
+          get user address
+          pass in the id and address
+          use router to go to page */}
+          <a href={`/FormPage?params=${addressParam}${item[0]}`}>
           <div className="flex items-center justify-start my-4 space-x-4">
               <span className="flex items-center px-2 py-1 text-xs font-semibold text-blue-500 bg-blue-100 rounded-md">
                   VIEW RESPONSES
