@@ -42,9 +42,8 @@ export default function formPreview({ item }) {
           <div className="block m-auto">
               <div>
                   <span className="inline-block text-sm text-gray-500 dark:text-gray-100">
-                      RESPONSES :
+                      RESPONSES : {item[3]}
                       <span className="font-bold text-gray-700 dark:text-white">
-                          {item[3]}
                       </span>
                   </span>
               </div>

@@ -1,3 +1,5 @@
+import { buyDataset } from "../utils/app";
+import toast from "react-hot-toast";
 
 export default function FormSalePreview({ item }) {
     return (
@@ -46,6 +48,10 @@ export default function FormSalePreview({ item }) {
                                 </div>
                                 <div class="flex items-center">
                                 <button
+                                    onClick={async () => {
+                                        await buyDataset(item[0]);
+                                        toast.success("You purched the form");
+                                    }}
                                     className="relative inline-block px-4 py-2 font-medium group "
                                     >
                                     <span className="absolute rounded-lg inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-[#0070f3] border-[2px] border-black group-hover:-translate-x-0 group-hover:-translate-y-0"></span>

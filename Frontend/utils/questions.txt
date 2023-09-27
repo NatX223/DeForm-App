@@ -1,0 +1,7 @@
+form name: DeFi survey
+description: survey aimed at getting insights into trader behaviour in DeFi
+1: Why are you trading DeFi?
+2: In your opinion is DeFi better than TradFi?
+3: list of trades
+
+0xE915b9A8549644f5883eB3b602f04372bF216eA7

@@ -1,5 +1,5 @@
 
-export default function Response() {
+export default function Response({ item }) {
     return (
         <div class="w-full sm:w-1/2 xl:w-1/3">
                             <div class="mx-0 mb-4 sm:ml-4 xl:mr-4">

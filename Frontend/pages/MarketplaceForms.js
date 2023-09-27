@@ -100,7 +100,6 @@ export default function Home() {
         <div class="flex flex-col w-full pl-0 md:p-4 md:space-y-4">
         <div class="h-screen pt-2 pb-24 pl-2 pr-2 overflow-auto md:pt-0 md:pr-0 md:pl-0">
         <div class="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-3">
-                <FormSalePreview />
                 {items &&
                 items.map((item, index) => (
                   <FormSalePreview key={index} item={item} />

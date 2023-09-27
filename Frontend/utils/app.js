@@ -121,7 +121,7 @@ const deploy = async () => {
   const controllerAddress = await controllerInstance.getAddress();
 
   const ContractInstance = new ethers.ContractFactory(formABI, bytecode, signer);
-  const contractInstance = await ContractInstance.deploy(routerContractAddress, controllerAddress, registryAddress, );
+  const contractInstance = await ContractInstance.deploy(routerContractAddress, controllerAddress, registryAddress, marketplaceContractAddress);
 
   const contractAddress = await contractInstance.getAddress();
 
@@ -257,7 +257,7 @@ export const submitForm = async (tableName, _responses) => {
   let formOwner;
   // const gasLimit = 300000;
   // const gasPriceInWei = ethers.parseUnits('25', 'gwei');
-
+  await connectWallet();
   const responses = await getResponse(_responses);
   const routerContract = new ethers.Contract(routerContractAddress, routerABI, signer);
   [tableId, formContractAddress, formOwner] = await routerContract.getTable(tableName);
@@ -373,7 +373,8 @@ async function getDetails(id, address) {
   const tableName = _tableName.replace(/_/g, ' ');
   const details = [tableName, tableDescription];
   const tablelandName = await formContract.getTableName(id);
-  const responses = await db.prepare(`SELECT * FROM ${tablelandName};`).all();
+  const _responses = await db.prepare(`SELECT * FROM ${tablelandName};`).all();
+  const responses = _responses.results;
   return [responses, details, userContract];
 }
 
@@ -400,6 +401,19 @@ export const getFormsForSale = async () => {
   }
 }
 
-export const buyDataset = async (id) => {
+export const listDataset = async (id, formAddress) => {
+  await connectWallet();
+  const price = ethers.parseEther("0.001");
+  const formContract = new ethers.Contract(formAddress, formABI, signer);
+  const tx = await formContract.listTable(id, price);
+  const receipt = await tx.wait();
+  console.log(receipt);
+}
 
+export const buyDataset = async (id) => {
+    await connectWallet();
+    const marketplaceContract = new ethers.Contract(marketplaceContractAddress, marketABI, signer);
+    const tx = await marketplaceContract.buyDataset(id);
+    const receipt = await tx.wait();
+    console.log(receipt);
 }

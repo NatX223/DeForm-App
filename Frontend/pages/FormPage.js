@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
-import { getResponses, splitString } from '../utils/app';
+import { getResponses, listDataset, splitString } from '../utils/app';
 import Response from '../components/Response';
 import FormDetails from '../components/formDetails';
 
@@ -10,24 +10,26 @@ export default function Home() {
   const [formResponses, setFormResponses] = useState([]);
   const [formDetails, setDetails] = useState([]);
   const [formAddress, setFormAddress] = useState(null);
+  const [id, setId] = useState(null);
 
   const [isLoading, setIsLoading] = useState(false);
 
   const fetchData = async () => {
     let responses;
     let details;
-    let id;
+    let _id;
     let address;
     let formAdd;
      setIsLoading(true);
      try {
       const searchParams = new URLSearchParams(window.location.search);
       const params = searchParams.get('params');
-      [id, address] = splitString(params);
+      [_id, address] = splitString(params);
         [responses, details, formAdd] = await getResponses(params);
         setFormResponses(responses);
         setDetails(details);
         setFormAddress(formAdd);
+        setId(_id);
         console.log(responses, details);
      } catch (error) {
         console.error(error);
@@ -116,8 +118,10 @@ export default function Home() {
         <div className="h-screen pt-2 pb-24 pl-2 pr-2 overflow-auto md:pt-0 md:pr-0 md:pl-0">
         <FormDetails item={formDetails}/>
         <div className="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-1">
-                <Response />
-                <Response />
+        {formResponses &&
+                formResponses.map((item, index) => (
+                  <Response key={index} item={item} />
+                ))}
             </div>
             <div className="grid grid-cols-1 gap-4 my-4 md:grid-cols-1 lg:grid-cols-3">
             <button className="relative inline-block px-4 py-2 font-medium group ">
@@ -130,7 +134,10 @@ export default function Home() {
                 <span className="absolute rounded-lg inset-0 w-full h-full bg-white border-2 border-black group-hover:bg-[#0070f3]"></span>
                 <span className="relative text-black">Create Datastream</span>
             </button>
-            <button className="relative inline-block px-4 py-2 font-medium group ">
+            <button
+            onClick={async () => {
+              await listDataset(id, formAddress);
+            }} className="relative inline-block px-4 py-2 font-medium group ">
                 <span className="absolute rounded-lg inset-0 w-full h-full transition duration-200 ease-out transform translate-x-1 translate-y-1 bg-[#0070f3] border-[2px] border-black group-hover:-translate-x-0 group-hover:-translate-y-0"></span>
                 <span className="absolute rounded-lg inset-0 w-full h-full bg-white border-2 border-black group-hover:bg-[#0070f3]"></span>
                 <span className="relative text-black">List Dataset</span>
